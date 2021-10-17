@@ -118,5 +118,56 @@ async def bye(ctx):
     await ctx.message.channel.send("Good night")
     await client.logout()   
 
+# Pause command
+@client.command(pass_context=True)
+async def pause(ctx):
+    #Checks if the author is connected to a voice channel
+    if ctx.author.voice and ctx.author.voice.channel:
+        #Checks if the bot is connected to a voicechannel in the server
+        if ctx.guild.voice_client == None:
+            await ctx.send("I ain't playing anything pal")
+
+        #Checks if the author and the bot are in the same channel
+        elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
+            await ctx.send("You gotta be in the same voice channel pal")
+            return
+
+        # Song is playing
+        elif not ctx.guild.voice_client.is_paused():
+            ctx.guild.voice_client.pause()
+            await ctx.message.channel.send("Pausing song pal")
+        
+        # Song is paused
+        else:
+            await ctx.message.channel.send("I'm already paused pal")
+    else:
+        await ctx.send("You gotta be in a voice channel pal")
+        return
+
+# Unpause command
+@client.command(pass_context=True)
+async def unpause(ctx):
+    #Checks if the author is connected to a voice channel
+    if ctx.author.voice and ctx.author.voice.channel:
+        #Checks if the bot is connected to a voicechannel in the server
+        if ctx.guild.voice_client == None:
+            await ctx.send("I ain't playing anything pal")
+
+        #Checks if the author and the bot are in the same channel
+        elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
+            await ctx.send("You gotta be in the same voice channel pal")
+            return
+
+        # Song is paused
+        elif ctx.guild.voice_client.is_paused():
+            ctx.guild.voice_client.resume()
+            await ctx.message.channel.send("Unpausing song pal")
+
+        # No songs are paused
+        else:
+            await ctx.send("I'm not paused pal")
+    else:
+        await ctx.send("You gotta be in a voice channel pal")
+        return
 
 client.run(config.token)
