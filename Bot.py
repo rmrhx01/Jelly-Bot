@@ -79,8 +79,6 @@ async def author_is_connected(ctx):
 async def connected_same_channel(ctx):
     #Checks if the bot is connected to a voicechannel in the server
     if ctx.guild.voice_client == None:
-        #If it isnt it connects to the where the author is
-        await ctx.author.voice.channel.connect()
         return True
     #Checks if the author and the bot are in the same channel
     elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
@@ -100,7 +98,8 @@ async def on_ready():
 @commands.check(author_is_connected)
 @commands.check(connected_same_channel)
 async def playURL(ctx, url, *args):
-    
+    #If it isnt it connects to the where the author is
+    await ctx.author.voice.channel.connect()
     voice = ctx.guild.voice_client
 
     #Download music
@@ -153,5 +152,16 @@ async def unpause(ctx):
     # No songs are paused
     else:
         await ctx.send("I'm not paused pal")
+
+# Stop command
+@client.command(pass_context=True)
+@commands.check(author_is_connected)
+@commands.check(connected_same_channel)
+async def stop(ctx):
+    if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
+        ctx.guild.voice_client.stop()
+        await ctx.message.channel.send("Stopping song pal")
+    else:
+        await ctx.message.channel.send("Nothing is playing pal")
 
 client.run(config.token)
