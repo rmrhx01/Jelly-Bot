@@ -1,5 +1,5 @@
 #Improved bot
-#By: Robbie
+#By: Robbie and DoctorSneus
 
 import discord
 import youtube_dl
@@ -12,26 +12,27 @@ from youtubesearchpython import VideosSearch #results = VideosSearch("video",lim
 
 #Dictionary where the key is the id to every guild where the bot is currently playing
 #Every key is gonna be associated with a list of songs which are on the queue
-voiceChannels = {}
+queues = {}
 
 class Song:
-    def __init__(self, ctx, idvideo: str, video_title: str, duration: int, voice):
+    def __init__(self, ctx, idvideo: str, video_title: str, voice):
         self.ctx = ctx
         self.idvideo = idvideo
         self.video_title = video_title
-        self.duration = duration
         self.voice = voice
         
-    async def play(self, afterFunc = None):
-        self.voice.stop()
-        def afterFunc(error):
+    async def play(self):
+
+        #Function to play after the song is done
+        def afterFunc(error = None):
             if(error):
                 print(error)
             else:
-                self._get_or_create_eventloop()
-                if voiceChannels[self.ctx.guild.id]:
-                    asyncio.run_coroutine_threadsafe(voiceChannels[self.ctx.guild.id][0].play(),client.loop)
-                    voiceChannels[self.ctx.guild.id].pop(0)
+                #Check if the queue is not empty
+                if queues[self.ctx.guild.id]:
+                    asyncio.run_coroutine_threadsafe(queues[self.ctx.guild.id].pop(0).play(),client.loop)
+                    #Delete the file for the last song
+
                 else:
                     asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
             
@@ -43,16 +44,6 @@ class Song:
     
     def is_paused(self):
         return self.voice.is_paused()
-
-    @staticmethod
-    def _get_or_create_eventloop():
-        try:
-            return asyncio.get_event_loop()
-        except RuntimeError as ex:
-            if "There is no current event loop in thread" in str(ex):
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                return asyncio.get_event_loop()
 
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
@@ -75,21 +66,12 @@ ytdl_format_options = {
     'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
-ffmpeg_options = {
-    'options': '-vn'
-}
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
-    #I feel so smart for the code below
-    for guild in client.guilds:
-        for c in guild.channels:
-            if c.name == 'general':
-                channel = c
-    #await channel.send("We in bois, my current prefix is " + prefix)   
+    print('We have logged in as {0.user}'.format(client)) 
 
 
 @client.command(pass_context=True)
@@ -97,27 +79,37 @@ async def on_ready():
 #@commands.check(whatever condition)
 async def playURL(ctx, url, *args):
 
+    #Checks if the author is connected to a voice channel
     if ctx.author.voice and ctx.author.voice.channel:
-        if ctx.guild.voice_client == None :
+        #Checks if the bot is connected to a voicechannel in the server
+        if ctx.guild.voice_client == None:
+            #If it isnt it connects to the where the author is
             voice = await ctx.author.voice.channel.connect()
+        #Checks if the author and the bot are in the same channel
+        elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
+            await ctx.send("You gotta be in the same voice channel pal")
+            return
         else:
             voice = ctx.guild.voice_client 
     else:
         await ctx.send("You gotta be in a voice channel pal")
         return
                    
+    #Download music
     info_dict = ytdl.extract_info(url, download=True)
     video_title = info_dict.get('title', None)
-    duration = info_dict.get('duration',None)
     idvideo = str(info_dict.get('id', None) + '.' + info_dict.get('ext', None))
 
-    s = Song(ctx, idvideo, video_title, duration, voice)
-    if not(ctx.guild.id in voiceChannels.keys()):
-        voiceChannels[ctx.guild.id] = []
+    #Create song object
+    s = Song(ctx, idvideo, video_title, voice)
+
+    #Check if a queue exists for the server
+    if not(ctx.guild.id in queues.keys()):
+        queues[ctx.guild.id] = []
         await s.play()
 
     else:
-        voiceChannels[ctx.guild.id].append(s)
+        queues[ctx.guild.id].append(s)
         await ctx.send('Added: {}'.format(video_title))
 
 
