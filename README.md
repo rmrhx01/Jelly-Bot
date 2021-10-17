@@ -14,8 +14,7 @@ Download
 TODO:
  - play(searches for the url and plays the URL)
  - playPlaylist
- - pause
- - skip
- - stop(stops playing and clears the queue)
+ - show queue
+ - delete queue
  - delete from queue
  
