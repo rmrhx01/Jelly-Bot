@@ -69,6 +69,27 @@ ytdl_format_options = {
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
+async def author_is_connected(ctx):
+    if ctx.author.voice and ctx.author.voice.channel:
+        return True
+    else:
+        await ctx.send("You gotta be in a voice channel pal")
+        return False
+
+async def connected_same_channel(ctx):
+    #Checks if the bot is connected to a voicechannel in the server
+    if ctx.guild.voice_client == None:
+        #If it isnt it connects to the where the author is
+        await ctx.author.voice.channel.connect(),client.loop
+        return True
+    #Checks if the author and the bot are in the same channel
+    elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
+        await ctx.send("You gotta be in the same voice channel pal")
+        return False
+    else:
+        return True
+    
+
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client)) 
@@ -76,25 +97,12 @@ async def on_ready():
 
 @client.command(pass_context=True)
 @commands.guild_only()
-#@commands.check(whatever condition)
+@commands.check(author_is_connected)
+@commands.check(connected_same_channel)
 async def playURL(ctx, url, *args):
+    
+    voice = ctx.guild.voice_client
 
-    #Checks if the author is connected to a voice channel
-    if ctx.author.voice and ctx.author.voice.channel:
-        #Checks if the bot is connected to a voicechannel in the server
-        if ctx.guild.voice_client == None:
-            #If it isnt it connects to the where the author is
-            voice = await ctx.author.voice.channel.connect()
-        #Checks if the author and the bot are in the same channel
-        elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
-            await ctx.send("You gotta be in the same voice channel pal")
-            return
-        else:
-            voice = ctx.guild.voice_client 
-    else:
-        await ctx.send("You gotta be in a voice channel pal")
-        return
-                   
     #Download music
     info_dict = ytdl.extract_info(url, download=True)
     video_title = info_dict.get('title', None)
