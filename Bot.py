@@ -2,6 +2,7 @@
 #By: Robbie and DoctorSneus
 
 import discord
+from discord.channel import VoiceChannel
 import youtube_dl
 import asyncio
 import os
@@ -28,11 +29,17 @@ class Song:
             if(error):
                 print(error)
             else:
-                #Check if the queue is not empty
-                if queues[self.ctx.guild.id]:
-                    asyncio.run_coroutine_threadsafe(queues[self.ctx.guild.id].pop(0).play(),client.loop)
-                    #Delete the file for the last song
+                #Check if the queue exists
+                if self.ctx.guild.id in queues.keys():
+                    #Checks if the queue is not empty
+                    if queues[self.ctx.guild.id]:
+                        asyncio.run_coroutine_threadsafe(queues[self.ctx.guild.id].pop(0).play(),client.loop)
+                        #Delete the file for the last song
 
+                    else:
+                        #If empty we delete it from the dictionary and disconnect
+                        del queues[self.ctx.guild.id]
+                        asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
                 else:
                     asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
             
@@ -76,12 +83,23 @@ async def author_is_connected(ctx):
         await ctx.send("You gotta be in a voice channel pal")
         return False
 
-async def connected_same_channel(ctx):
+async def bot_is_connected(ctx):
+    if ctx.guild.voice_client:
+        return True
+    else:
+        await ctx.send("Im not connected pal")
+        return False
+
+async def connect_bot(ctx):
     #Checks if the bot is connected to a voicechannel in the server
     if ctx.guild.voice_client == None:
-        return True
+        await ctx.author.voice.channel.connect()
+    return True
+    
+
+async def connected_same_channel(ctx):
     #Checks if the author and the bot are in the same channel
-    elif ctx.guild.voice_client.channel != ctx.author.voice.channel:
+    if ctx.guild.voice_client.channel != ctx.author.voice.channel:
         await ctx.send("You gotta be in the same voice channel pal")
         return False
     else:
@@ -96,10 +114,10 @@ async def on_ready():
 @client.command(pass_context=True)
 @commands.guild_only()
 @commands.check(author_is_connected)
+@commands.check(connect_bot)
 @commands.check(connected_same_channel)
 async def playURL(ctx, url, *args):
-    #If it isnt it connects to the where the author is
-    await ctx.author.voice.channel.connect()
+    
     voice = ctx.guild.voice_client
 
     #Download music
@@ -123,11 +141,15 @@ async def playURL(ctx, url, *args):
 @client.command(pass_context=True)
 async def bye(ctx):
     await ctx.message.channel.send("Good night")
+    for server in client.guilds:
+        if server.voice_client:
+            await server.voice_client.disconnect()
     await client.logout()   
 
 # Pause command
 @client.command(pass_context=True)
 @commands.check(author_is_connected)
+@commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
 async def pause(ctx):
     # Song is playing
@@ -142,6 +164,7 @@ async def pause(ctx):
 # Unpause command
 @client.command(pass_context=True)
 @commands.check(author_is_connected)
+@commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
 async def unpause(ctx):
     # Song is paused
@@ -153,14 +176,28 @@ async def unpause(ctx):
     else:
         await ctx.send("I'm not paused pal")
 
+# Skip command
+@client.command(pass_context=True)
+@commands.check(author_is_connected)
+@commands.check(bot_is_connected)
+@commands.check(connected_same_channel)
+async def skip(ctx):
+    if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
+        ctx.guild.voice_client.stop()
+        await ctx.message.channel.send("Skipping song pal")
+    else:
+        await ctx.message.channel.send("Nothing is playing pal")
+
 # Stop command
 @client.command(pass_context=True)
 @commands.check(author_is_connected)
+@commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
 async def stop(ctx):
-    if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
+    if ctx.guild.voice_client.is_playing():
+        del queues[ctx.guild.id]
         ctx.guild.voice_client.stop()
-        await ctx.message.channel.send("Stopping song pal")
+        await ctx.message.channel.send("Stopped queue pal")
     else:
         await ctx.message.channel.send("Nothing is playing pal")
 
