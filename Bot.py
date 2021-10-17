@@ -131,27 +131,27 @@ async def bye(ctx):
 @commands.check(author_is_connected)
 @commands.check(connected_same_channel)
 async def pause(ctx):
-        # Song is playing
-        if not ctx.guild.voice_client.is_paused():
-            ctx.guild.voice_client.pause()
-            await ctx.message.channel.send("Pausing song pal")
-        
-        # Song is paused
-        else:
-            await ctx.message.channel.send("I'm already paused pal")
+    # Song is playing
+    if not ctx.guild.voice_client.is_paused():
+        ctx.guild.voice_client.pause()
+        await ctx.message.channel.send("Pausing song pal")
+    
+    # Song is paused
+    else:
+        await ctx.message.channel.send("I'm already paused pal")
 
 # Unpause command
 @client.command(pass_context=True)
 @commands.check(author_is_connected)
 @commands.check(connected_same_channel)
 async def unpause(ctx):
-        # Song is paused
-        if ctx.guild.voice_client.is_paused():
-            ctx.guild.voice_client.resume()
-            await ctx.message.channel.send("Unpausing song pal")
+    # Song is paused
+    if ctx.guild.voice_client.is_paused():
+        ctx.guild.voice_client.resume()
+        await ctx.message.channel.send("Unpausing song pal")
 
-        # No songs are paused
-        else:
-            await ctx.send("I'm not paused pal")
-            
+    # No songs are paused
+    else:
+        await ctx.send("I'm not paused pal")
+
 client.run(config.token)
