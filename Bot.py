@@ -139,7 +139,8 @@ async def play_url(ctx, url):
 
 @client.slash_command(guild_ids=[658165266206818315])
 async def bye(ctx):
-    await ctx.send("Good night")
+    print(ctx)
+    await ctx.response.send_message("Good night")
     for server in client.guilds:
         if server.voice_client:
             await server.voice_client.disconnect()
