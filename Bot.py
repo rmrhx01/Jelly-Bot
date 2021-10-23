@@ -143,7 +143,7 @@ async def bye(ctx):
     for server in client.guilds:
         if server.voice_client:
             await server.voice_client.disconnect()
-    await client.logout()   
+    await client.close()   
 
 # Pause command
 @client.slash_command(guild_ids=[658165266206818315])
