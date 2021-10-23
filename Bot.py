@@ -43,7 +43,7 @@ class Song:
                     asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
             
         self.voice.play(discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.idvideo)),after = afterFunc)
-        await self.ctx.send(self)
+        await self.ctx.response.send_message(self)
     
     def is_playing(self):
         return self.voice.is_playing()
@@ -79,14 +79,14 @@ async def author_is_connected(ctx):
     if ctx.author.voice and ctx.author.voice.channel:
         return True
     else:
-        await ctx.send("You gotta be in a voice channel pal")
+        await ctx.response.send_message("You gotta be in a voice channel pal")
         return False
 
 async def bot_is_connected(ctx):
     if ctx.guild.voice_client:
         return True
     else:
-        await ctx.send("Im not connected pal")
+        await ctx.response.send_message("Im not connected pal")
         return False
 
 async def connect_bot(ctx):
@@ -99,7 +99,7 @@ async def connect_bot(ctx):
 async def connected_same_channel(ctx):
     #Checks if the author and the bot are in the same channel
     if ctx.guild.voice_client.channel != ctx.author.voice.channel:
-        await ctx.send("You gotta be in the same voice channel pal")
+        await ctx.response.send_message("You gotta be in the same voice channel pal")
         return False
     else:
         return True
@@ -134,12 +134,11 @@ async def play_url(ctx, url):
 
     else:
         queues[ctx.guild.id].append(s)
-        await ctx.send('Added: {}'.format(video_title))
+        await ctx.response.send_message('Added: {}'.format(video_title))
 
 
 @client.slash_command(guild_ids=[658165266206818315])
 async def bye(ctx):
-    print(ctx)
     await ctx.response.send_message("Good night")
     for server in client.guilds:
         if server.voice_client:
@@ -155,11 +154,11 @@ async def pause(ctx):
     # Song is playing
     if not ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.pause()
-        await ctx.send("Pausing song pal")
+        await ctx.response.send_message("Pausing song pal")
     
     # Song is paused
     else:
-        await ctx.send("I'm already paused pal")
+        await ctx.response.send_message("I'm already paused pal")
 
 # Unpause command
 @client.slash_command(guild_ids=[658165266206818315])
@@ -170,11 +169,11 @@ async def unpause(ctx):
     # Song is paused
     if ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.resume()
-        await ctx.send("Unpausing song pal")
+        await ctx.response.send_message("Unpausing song pal")
 
     # No songs are paused
     else:
-        await ctx.send("I'm not paused pal")
+        await ctx.response.send_message("I'm not paused pal")
 
 # Skip command
 @client.slash_command(guild_ids=[658165266206818315])
@@ -184,9 +183,9 @@ async def unpause(ctx):
 async def skip(ctx):
     if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.stop()
-        await ctx.send("Skipping song pal")
+        await ctx.response.send_message("Skipping song pal")
     else:
-        await ctx.send("Nothing is playing pal")
+        await ctx.response.send_message("Nothing is playing pal")
 
 # Stop command
 @client.slash_command(guild_ids=[658165266206818315])
@@ -197,8 +196,8 @@ async def stop(ctx):
     if ctx.guild.voice_client.is_playing():
         del queues[ctx.guild.id]
         ctx.guild.voice_client.stop()
-        await ctx.send("Stopped queue pal")
+        await ctx.response.send_message("Stopped queue pal")
     else:
-        await ctx.send("Nothing is playing pal")
+        await ctx.response.send_message("Nothing is playing pal")
 
 client.run(config.token)
