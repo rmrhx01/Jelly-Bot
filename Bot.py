@@ -139,8 +139,7 @@ async def play_url(ctx, url):
 
 @client.slash_command(guild_ids=[658165266206818315])
 async def bye(ctx):
-    await ctx.message.channel.send("Good night")
-    await ctx.send('Guild: {}'.format(ctx.guild.id))
+    await ctx.send("Good night")
     for server in client.guilds:
         if server.voice_client:
             await server.voice_client.disconnect()
@@ -155,11 +154,11 @@ async def pause(ctx):
     # Song is playing
     if not ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.pause()
-        await ctx.message.channel.send("Pausing song pal")
+        await ctx.send("Pausing song pal")
     
     # Song is paused
     else:
-        await ctx.message.channel.send("I'm already paused pal")
+        await ctx.send("I'm already paused pal")
 
 # Unpause command
 @client.slash_command(guild_ids=[658165266206818315])
@@ -170,7 +169,7 @@ async def unpause(ctx):
     # Song is paused
     if ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.resume()
-        await ctx.message.channel.send("Unpausing song pal")
+        await ctx.send("Unpausing song pal")
 
     # No songs are paused
     else:
@@ -184,9 +183,9 @@ async def unpause(ctx):
 async def skip(ctx):
     if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.stop()
-        await ctx.message.channel.send("Skipping song pal")
+        await ctx.send("Skipping song pal")
     else:
-        await ctx.message.channel.send("Nothing is playing pal")
+        await ctx.send("Nothing is playing pal")
 
 # Stop command
 @client.slash_command(guild_ids=[658165266206818315])
