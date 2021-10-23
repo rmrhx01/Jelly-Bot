@@ -2,7 +2,6 @@
 #By: Robbie and DoctorSneus
 
 import discord
-from discord.channel import VoiceChannel
 import youtube_dl
 import asyncio
 import os
@@ -55,7 +54,7 @@ class Song:
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
 
-client = commands.Bot(command_prefix = "&")
+client = commands.Bot()
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -111,12 +110,12 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(client)) 
 
 
-@client.command(pass_context=True)
+@client.slash_command(guild_ids=[658165266206818315])
 @commands.guild_only()
 @commands.check(author_is_connected)
 @commands.check(connect_bot)
 @commands.check(connected_same_channel)
-async def playURL(ctx, url, *args):
+async def play_url(ctx, url):
     
     voice = ctx.guild.voice_client
 
@@ -138,16 +137,17 @@ async def playURL(ctx, url, *args):
         await ctx.send('Added: {}'.format(video_title))
 
 
-@client.command(pass_context=True)
+@client.slash_command(guild_ids=[658165266206818315])
 async def bye(ctx):
     await ctx.message.channel.send("Good night")
+    await ctx.send('Guild: {}'.format(ctx.guild.id))
     for server in client.guilds:
         if server.voice_client:
             await server.voice_client.disconnect()
     await client.logout()   
 
 # Pause command
-@client.command(pass_context=True)
+@client.slash_command(guild_ids=[658165266206818315])
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -162,7 +162,7 @@ async def pause(ctx):
         await ctx.message.channel.send("I'm already paused pal")
 
 # Unpause command
-@client.command(pass_context=True)
+@client.slash_command(guild_ids=[658165266206818315])
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -177,7 +177,7 @@ async def unpause(ctx):
         await ctx.send("I'm not paused pal")
 
 # Skip command
-@client.command(pass_context=True)
+@client.slash_command(guild_ids=[658165266206818315])
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -189,7 +189,7 @@ async def skip(ctx):
         await ctx.message.channel.send("Nothing is playing pal")
 
 # Stop command
-@client.command(pass_context=True)
+@client.slash_command(guild_ids=[658165266206818315])
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -197,8 +197,8 @@ async def stop(ctx):
     if ctx.guild.voice_client.is_playing():
         del queues[ctx.guild.id]
         ctx.guild.voice_client.stop()
-        await ctx.message.channel.send("Stopped queue pal")
+        await ctx.send("Stopped queue pal")
     else:
-        await ctx.message.channel.send("Nothing is playing pal")
+        await ctx.send("Nothing is playing pal")
 
 client.run(config.token)
