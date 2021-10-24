@@ -116,7 +116,7 @@ async def on_ready():
 @commands.check(connect_bot)
 @commands.check(connected_same_channel)
 async def play_url(ctx, url):
-    
+    await ctx.interaction.response.defer()
     voice = ctx.guild.voice_client
 
     #Download music
@@ -130,11 +130,14 @@ async def play_url(ctx, url):
     #Check if a queue exists for the server
     if not(ctx.guild.id in queues.keys()):
         queues[ctx.guild.id] = []
+        m = await ctx.interaction.original_message()
+        await m.edit(content = "Making queue")
         await s.play()
 
     else:
         queues[ctx.guild.id].append(s)
-        await ctx.response.send_message('Added: {}'.format(video_title))
+        m = await ctx.interaction.original_message()
+        await m.edit(content = 'Added: {}'.format(video_title))
 
 
 @client.slash_command(guild_ids=[658165266206818315])
