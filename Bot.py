@@ -43,7 +43,7 @@ class Song:
                     asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
             
         self.voice.play(discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.idvideo)),after = afterFunc)
-        await self.ctx.response.send_message(self)
+        await self.ctx.send(self)
     
     def is_playing(self):
         return self.voice.is_playing()
