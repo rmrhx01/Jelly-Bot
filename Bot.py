@@ -20,6 +20,7 @@ class Song:
         self.idvideo = idvideo
         self.video_title = video_title
         self.voice = voice
+        self.send_message = True
         
     async def play(self):
 
@@ -43,13 +44,12 @@ class Song:
                     asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
             
         self.voice.play(discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.idvideo)),after = afterFunc)
-        await self.ctx.send(self)
+        if self.send_message:
+            await self.ctx.send(self)
     
-    def is_playing(self):
-        return self.voice.is_playing()
-    
-    def is_paused(self):
-        return self.voice.is_paused()
+    def set_send_message(self, send_message: bool = True ):
+        self.send_message = send_message
+
 
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
@@ -131,7 +131,8 @@ async def play_url(ctx, url):
     if not(ctx.guild.id in queues.keys()):
         queues[ctx.guild.id] = []
         m = await ctx.interaction.original_message()
-        await m.edit(content = "Making queue")
+        await m.edit(content = s)
+        s.set_send_message(send_message = False)
         await s.play()
 
     else:
