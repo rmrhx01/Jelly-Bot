@@ -141,7 +141,7 @@ async def play_url(ctx, url):
         await m.edit(content = 'Added: {}'.format(video_title))
 
 
-@client.slash_command(guild_ids=[658165266206818315])
+@client.slash_command(guild_ids=[658165266206818315], description = "Kill the bot pal")
 async def bye(ctx):
     await ctx.response.send_message("Good night")
     for server in client.guilds:
@@ -150,7 +150,7 @@ async def bye(ctx):
     await client.close()   
 
 # Pause command
-@client.slash_command(guild_ids=[658165266206818315])
+@client.slash_command(guild_ids=[658165266206818315], description = "Pause the current song pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -165,7 +165,7 @@ async def pause(ctx):
         await ctx.response.send_message("I'm already paused pal")
 
 # Unpause command
-@client.slash_command(guild_ids=[658165266206818315])
+@client.slash_command(guild_ids=[658165266206818315], description = "Unpause the current song pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -180,7 +180,7 @@ async def unpause(ctx):
         await ctx.response.send_message("I'm not paused pal")
 
 # Skip command
-@client.slash_command(guild_ids=[658165266206818315])
+@client.slash_command(guild_ids=[658165266206818315], description = "Skip the current song pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -192,7 +192,7 @@ async def skip(ctx):
         await ctx.response.send_message("Nothing is playing pal")
 
 # Stop command
-@client.slash_command(guild_ids=[658165266206818315])
+@client.slash_command(guild_ids=[658165266206818315], description = "No more music pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
