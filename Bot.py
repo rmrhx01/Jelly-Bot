@@ -110,7 +110,7 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(client)) 
 
 
-@client.slash_command(guild_ids=[658165266206818315])
+@client.slash_command(guild_ids=[658165266206818315], description = "Play a song from a URL pal")
 @commands.guild_only()
 @commands.check(author_is_connected)
 @commands.check(connect_bot)
