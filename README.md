@@ -9,7 +9,7 @@ pip install
 
 Download
  - download ffmpeg https://github.com/BtbN/FFmpeg-Builds/releases
- - add ffmpeg to your PATH variable
+ - add ffmpeg.exe from the bin folder to your PATH variables
 
 TODO:
  - playPlaylist
@@ -18,4 +18,6 @@ TODO:
  - delete from queue
  - Add descriptions to the parameters of the commands
  - Fix download
+ - Volume controls
+ - Stream(?)
  

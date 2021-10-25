@@ -63,13 +63,12 @@ ytdl_format_options = {
     'noplaylist': True,
     'nocheckcertificate': True,
     'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
+    'quiet': False,
+    'no_warnings': False,
     'default_search': 'auto',
     'nooverwrites': True,
     'cachedir' : False,
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
+    'source_address' : '0.0.0.0'
 }
 
 
@@ -123,13 +122,16 @@ async def play(
     await ctx.interaction.response.defer()
 
     url = VideosSearch(query = query,limit = 1).result()["result"][0]["link"]
-    
-    voice = ctx.guild.voice_client
 
     #Download music
-    info_dict = ytdl.extract_info(url, download=True)
+    info_dict = await client.loop.run_in_executor(
+            None, lambda: ytdl.extract_info(url, download=True)
+        )
     video_title = info_dict.get('title', None)
     idvideo = str(info_dict.get('id', None) + '.' + info_dict.get('ext', None))
+
+    voice = ctx.guild.voice_client
+    
 
     #Create song object
     s = Song(ctx, idvideo, video_title, voice)
