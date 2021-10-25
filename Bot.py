@@ -5,9 +5,9 @@ import discord
 import youtube_dl
 import asyncio
 import os
-import random
 import config
 from discord.ext import commands
+from discord.commands import Option
 from youtubesearchpython import VideosSearch #results = VideosSearch("video",limit = 1).result()
 
 #Dictionary where the key is the id to every guild where the bot is currently playing
@@ -35,7 +35,7 @@ class Song:
                     if queues[self.ctx.guild.id]:
                         asyncio.run_coroutine_threadsafe(queues[self.ctx.guild.id].pop(0).play(),client.loop)
                         #Delete the file for the last song
-
+                        os.remove(self.idvideo)
                     else:
                         #If empty we delete it from the dictionary and disconnect
                         del queues[self.ctx.guild.id]
@@ -109,6 +109,43 @@ async def connected_same_channel(ctx):
 async def on_ready():
     print('We have logged in as {0.user}'.format(client)) 
 
+
+@client.slash_command(guild_ids=[658165266206818315], description = "Play a song from a youtube search pal")
+@commands.guild_only()
+@commands.check(author_is_connected)
+@commands.check(connect_bot)
+@commands.check(connected_same_channel)
+async def play(
+                ctx, 
+                query: Option(str, "What do you want to search for, pal?")):
+
+
+    await ctx.interaction.response.defer()
+
+    url = VideosSearch(query = query,limit = 1).result()["result"][0]["link"]
+    
+    voice = ctx.guild.voice_client
+
+    #Download music
+    info_dict = ytdl.extract_info(url, download=True)
+    video_title = info_dict.get('title', None)
+    idvideo = str(info_dict.get('id', None) + '.' + info_dict.get('ext', None))
+
+    #Create song object
+    s = Song(ctx, idvideo, video_title, voice)
+
+    #Check if a queue exists for the server
+    if not(ctx.guild.id in queues.keys()):
+        queues[ctx.guild.id] = []
+        m = await ctx.interaction.original_message()
+        await m.edit(content = s)
+        s.set_send_message(send_message = False)
+        await s.play()
+
+    else:
+        queues[ctx.guild.id].append(s)
+        m = await ctx.interaction.original_message()
+        await m.edit(content = 'Added: {}'.format(video_title))
 
 @client.slash_command(guild_ids=[658165266206818315], description = "Play a song from a URL pal")
 @commands.guild_only()

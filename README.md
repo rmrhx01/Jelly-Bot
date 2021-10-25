@@ -12,9 +12,10 @@ Download
  - add ffmpeg to your PATH variable
 
 TODO:
- - play(searches for the url and plays the URL)
  - playPlaylist
  - show queue
  - delete queue
  - delete from queue
+ - Add descriptions to the parameters of the commands
+ - Fix download
  
