@@ -4,7 +4,6 @@
 import discord
 import youtube_dl
 import asyncio
-import os
 import config
 from discord.ext import commands
 from discord.commands import Option
@@ -34,28 +33,28 @@ class Song:
                     #Checks if the queue is not empty
                     if queues[self.ctx.guild.id]:
                         asyncio.run_coroutine_threadsafe(queues[self.ctx.guild.id].pop(0).play(),client.loop)
-                        #Delete the file for the last song
-                        os.remove(self.idvideo)
                     else:
                         #If empty we delete it from the dictionary and disconnect
                         del queues[self.ctx.guild.id]
                         asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
                 else:
                     asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
-            
         self.voice.play(discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.idvideo)),after = afterFunc)
         if self.send_message:
-            await self.ctx.send(self)
+            await self.ctx.send(self)   
     
     def set_send_message(self, send_message: bool = True ):
         self.send_message = send_message
 
+    def get_videoTitle(self):
+        return self.video_title
 
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
 
 client = commands.Bot()
 
+guilds = [715759799668834324, 658165266206818315]
 ytdl_format_options = {
     'format': 'bestaudio/best',
     'outtmpl': '%(id)s.%(ext)s',
@@ -63,13 +62,14 @@ ytdl_format_options = {
     'noplaylist': True,
     'nocheckcertificate': True,
     'ignoreerrors': False,
-    'quiet': False,
-    'no_warnings': False,
+    'quiet': True,
+    'no_warnings': True,
     'default_search': 'auto',
     'nooverwrites': True,
     'cachedir' : False,
     'source_address' : '0.0.0.0'
 }
+
 
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
@@ -109,7 +109,7 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(client)) 
 
 
-@client.slash_command(guild_ids=[658165266206818315], description = "Play a song from a youtube search pal")
+@client.slash_command(guild_ids=guilds, description = "Play a song from a youtube search pal")
 @commands.guild_only()
 @commands.check(author_is_connected)
 @commands.check(connect_bot)
@@ -120,20 +120,18 @@ async def play(
 
 
     await ctx.interaction.response.defer()
+    voice = ctx.guild.voice_client
 
     url = VideosSearch(query = query,limit = 1).result()["result"][0]["link"]
 
     #Download music
     info_dict = await client.loop.run_in_executor(
-            None, lambda: ytdl.extract_info(url, download=True)
+            None, lambda: ytdl.extract_info(url, download=False)
         )
     video_title = info_dict.get('title', None)
-    idvideo = str(info_dict.get('id', None) + '.' + info_dict.get('ext', None))
+    idvideo = info_dict.get('url',None)
 
-    voice = ctx.guild.voice_client
-    
-
-    #Create song object
+    #Create song object 
     s = Song(ctx, idvideo, video_title, voice)
 
     #Check if a queue exists for the server
@@ -149,7 +147,7 @@ async def play(
         m = await ctx.interaction.original_message()
         await m.edit(content = 'Added: {}'.format(video_title))
 
-@client.slash_command(guild_ids=[658165266206818315], description = "Play a song from a URL pal")
+@client.slash_command(guild_ids=guilds, description = "Play a song from a URL pal")
 @commands.guild_only()
 @commands.check(author_is_connected)
 @commands.check(connect_bot)
@@ -159,9 +157,11 @@ async def play_url(ctx, url):
     voice = ctx.guild.voice_client
 
     #Download music
-    info_dict = ytdl.extract_info(url, download=True)
+    info_dict = await client.loop.run_in_executor(
+            None, lambda: ytdl.extract_info(url, download=True)
+        )
     video_title = info_dict.get('title', None)
-    idvideo = str(info_dict.get('id', None) + '.' + info_dict.get('ext', None))
+    idvideo = info_dict.get('url',None)
 
     #Create song object
     s = Song(ctx, idvideo, video_title, voice)
@@ -180,7 +180,7 @@ async def play_url(ctx, url):
         await m.edit(content = 'Added: {}'.format(video_title))
 
 
-@client.slash_command(guild_ids=[658165266206818315], description = "Kill the bot pal")
+@client.slash_command(guild_ids=guilds, description = "Kill the bot pal")
 async def bye(ctx):
     await ctx.response.send_message("Good night")
     for server in client.guilds:
@@ -189,7 +189,7 @@ async def bye(ctx):
     await client.close()   
 
 # Pause command
-@client.slash_command(guild_ids=[658165266206818315], description = "Pause the current song pal")
+@client.slash_command(guild_ids=guilds, description = "Pause the current song pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -204,7 +204,7 @@ async def pause(ctx):
         await ctx.response.send_message("I'm already paused pal")
 
 # Unpause command
-@client.slash_command(guild_ids=[658165266206818315], description = "Unpause the current song pal")
+@client.slash_command(guild_ids=guilds, description = "Unpause the current song pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -219,7 +219,7 @@ async def unpause(ctx):
         await ctx.response.send_message("I'm not paused pal")
 
 # Skip command
-@client.slash_command(guild_ids=[658165266206818315], description = "Skip the current song pal")
+@client.slash_command(guild_ids=guilds, description = "Skip the current song pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -231,7 +231,7 @@ async def skip(ctx):
         await ctx.response.send_message("Nothing is playing pal")
 
 # Stop command
-@client.slash_command(guild_ids=[658165266206818315], description = "No more music pal")
+@client.slash_command(guild_ids=guilds, description = "No more music pal")
 @commands.check(author_is_connected)
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
@@ -242,5 +242,27 @@ async def stop(ctx):
         await ctx.response.send_message("Stopped queue pal")
     else:
         await ctx.response.send_message("Nothing is playing pal")
+'''
+@client.slash_command(guild_ids=guilds, description = "Show the songs on queue pal")
+@commands.guild_only()
+@commands.check(bot_is_connected)
+async def show_queue(ctx):
+    """Shows the queue of songs
+
+    Args:
+        ctx (abc.Messagable): Context of the command when summoned
+    """
+    if ctx.guild.id in queues.keys() and queues[ctx.guild.id]: 
+        await ctx.defer()
+        string = ""
+        for i in queues[ctx.guild.id]:
+            string += i.get_videoTitle()
+        m = await ctx.interaction.original_message()
+        await m.edit(content = string)
+
+    else:
+        await ctx.response.send_message("Queue is empty pal")
+    
+'''
 
 client.run(config.token)

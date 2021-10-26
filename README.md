@@ -17,7 +17,6 @@ TODO:
  - delete queue
  - delete from queue
  - Add descriptions to the parameters of the commands
- - Fix download
  - Volume controls
- - Stream(?)
+ - play from spotify
  
