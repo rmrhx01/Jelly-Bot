@@ -67,7 +67,8 @@ ytdl_format_options = {
     'default_search': 'auto',
     'nooverwrites': True,
     'cachedir' : False,
-    'source_address' : '0.0.0.0'
+    'source_address' : '0.0.0.0',
+    'verbose' : True
 }
 
 
