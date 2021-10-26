@@ -224,27 +224,25 @@ async def stop(ctx):
         await ctx.response.send_message("Stopped queue pal")
     else:
         await ctx.response.send_message("Nothing is playing pal")
-'''
+
 @client.slash_command(guild_ids=guilds, description = "Show the songs on queue pal")
 @commands.guild_only()
 @commands.check(bot_is_connected)
 async def show_queue(ctx):
-    """Shows the queue of songs
-
-    Args:
-        ctx (abc.Messagable): Context of the command when summoned
-    """
+    #Shows the queue of songs
     if ctx.guild.id in queues.keys() and queues[ctx.guild.id]: 
         await ctx.defer()
         string = ""
-        for i in queues[ctx.guild.id]:
-            string += i.get_videoTitle()
+        # For each song in the queue, it appends the enumerated title
+        for i, song in enumerate(queues[ctx.guild.id]):
+            string += f"{i+1}. {song.get_videoTitle()}\n"
+            
         m = await ctx.interaction.original_message()
         await m.edit(content = string)
 
     else:
         await ctx.response.send_message("Queue is empty pal")
     
-'''
+
 
 client.run(config.token)
