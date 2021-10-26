@@ -84,7 +84,7 @@ async def bot_is_connected(ctx):
     if ctx.guild.voice_client:
         return True
     else:
-        await ctx.response.send_message("Im not connected pal")
+        await ctx.response.send_message("I'm not connected pal")
         return False
 
 async def connect_bot(ctx):
