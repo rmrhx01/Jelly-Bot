@@ -7,10 +7,6 @@ pip install
  - youtube-search-python
  - PyNaCl
 
-Download
- - download ffmpeg https://github.com/BtbN/FFmpeg-Builds/releases
- - add ffmpeg.exe from the bin folder to your PATH variables
-
 TODO:
  - playPlaylist
  - show queue
