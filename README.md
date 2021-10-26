@@ -9,7 +9,6 @@ pip install
 
 TODO:
  - playPlaylist
- - delete queue
  - delete from queue
  - Add descriptions to the parameters of the commands
  - Volume controls
