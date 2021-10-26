@@ -118,7 +118,11 @@ async def genericPlay(ctx, url):
     s = Song(ctx, idvideo, video_title, voice)
 
     #Check if a queue exists for the server
-    if not(ctx.guild.id in queues.keys()):
+    if not idvideo:
+        m = await ctx.interaction.original_message()
+        await m.edit(content = 'Couldn\'t find that song bucko')
+
+    elif not(ctx.guild.id in queues.keys()):
         queues[ctx.guild.id] = []
         m = await ctx.interaction.original_message()
         await m.edit(content = s)
@@ -140,8 +144,12 @@ async def play( ctx,
     await ctx.interaction.response.defer()
 
     # Finding the URL
-    url = VideosSearch(query = query,limit = 1).result()["result"][0]["link"]
-    await genericPlay(ctx, url)
+    result = VideosSearch(query = query,limit = 1).result()["result"]
+    if result:
+        await genericPlay(ctx, result[0]["link"])
+    else:
+        m = await ctx.interaction.original_message()
+        await m.edit(content = 'Couldn\'t find that song bucko')
 
 @client.slash_command(guild_ids=guilds, description = "Play a song from a URL pal")
 @commands.guild_only()
