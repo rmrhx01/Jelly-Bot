@@ -183,7 +183,7 @@ async def pause(ctx):
     
     # Song is paused
     else:
-        await ctx.response.send_message("I'm already paused pal")
+        await ctx.response.send_message("Can't pause pal")
 
 # Unpause command
 @client.slash_command(guild_ids=guilds, description = "Unpause the current song pal")
@@ -198,7 +198,7 @@ async def unpause(ctx):
 
     # No songs are paused
     else:
-        await ctx.response.send_message("I'm not paused pal")
+        await ctx.response.send_message("Can't unpause pal")
 
 # Skip command
 @client.slash_command(guild_ids=guilds, description = "Skip the current song pal")
@@ -218,7 +218,7 @@ async def skip(ctx):
 @commands.check(bot_is_connected)
 @commands.check(connected_same_channel)
 async def stop(ctx):
-    if ctx.guild.voice_client.is_playing():
+    if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
         del queues[ctx.guild.id]
         ctx.guild.voice_client.stop()
         await ctx.response.send_message("Stopped queue pal")
@@ -243,6 +243,15 @@ async def show_queue(ctx):
     else:
         await ctx.response.send_message("Queue is empty pal")
     
-
+@client.slash_command(guild_ids=guilds, description = "Delete the songs in queue pal")
+@commands.check(author_is_connected)
+@commands.check(bot_is_connected)
+@commands.check(connected_same_channel)
+async def delete_queue(ctx):
+    if ctx.guild.id in queues.keys() and queues[ctx.guild.id]: 
+        del queues[ctx.guild.id]
+        await ctx.response.send_message("Deleted queue pal")
+    else:
+        await ctx.response.send_message("There's no queue pal")
 
 client.run(config.token)
