@@ -3,4 +3,5 @@ __pycache__
 *.webm
 *.m4a.part
 *.m4a
+.env
 ffmpeg.exe

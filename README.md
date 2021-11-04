@@ -7,6 +7,9 @@ pip install
  - youtube-search-python
  - PyNaCl
 
+Set Enviroment Variables:
+ - TOKEN
+
 TODO:
  - playPlaylist
  - delete from queue

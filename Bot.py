@@ -4,7 +4,8 @@
 import discord
 import youtube_dl
 import asyncio
-import config
+import os
+from dotenv import load_dotenv
 from discord.ext import commands
 from discord.commands import Option
 from youtubesearchpython import VideosSearch #results = VideosSearch("video",limit = 1).result()
@@ -68,7 +69,6 @@ ytdl_format_options = {
     'nooverwrites': True,
     'cachedir' : False,
     'source_address' : '0.0.0.0',
-    'verbose' : True
 }
 
 
@@ -255,4 +255,5 @@ async def delete_queue(ctx):
     else:
         await ctx.response.send_message("There's no queue pal")
 
-client.run(config.token)
+load_dotenv('.env')
+client.run(os.environ['TOKEN'])
