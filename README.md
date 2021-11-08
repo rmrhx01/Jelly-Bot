@@ -10,10 +10,13 @@ pip install
 Set Enviroment Variables:
  - TOKEN
 
+Bugs:
+ - Show queue doesnt work if the queue is past 2000 characters
+
 TODO:
- - playPlaylist
  - delete from queue
  - Add descriptions to the parameters of the commands
  - Volume controls
+ - Shuffle
  - play from spotify
  

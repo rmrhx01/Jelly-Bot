@@ -8,7 +8,8 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord.commands import Option
-from youtubesearchpython import VideosSearch #results = VideosSearch("video",limit = 1).result()
+from youtubesearchpython.__future__ import VideosSearch 
+from youtubesearchpython.__future__ import Playlist
 
 #Dictionary where the key is the id to every guild where the bot is currently playing
 #Every key is gonna be associated with a list of songs which are on the queue
@@ -56,23 +57,24 @@ class Song:
 client = commands.Bot()
 
 guilds = [715759799668834324, 658165266206818315]
-ytdl_format_options = {
+ytdl_format_options_video = {
     'format': 'bestaudio/best',
     'outtmpl': '%(id)s.%(ext)s',
     'restrictfilenames': True,
-    'noplaylist': True,
     'nocheckcertificate': True,
     'ignoreerrors': False,
     'quiet': True,
     'no_warnings': True,
-    'default_search': 'auto',
     'nooverwrites': True,
     'cachedir' : False,
+    'noplaylist': True,
     'source_address' : '0.0.0.0',
 }
 
 
-ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
+
+ytdl = youtube_dl.YoutubeDL(ytdl_format_options_video)
+
 
 async def author_is_connected(ctx):
     if ctx.author.voice and ctx.author.voice.channel:
@@ -101,39 +103,62 @@ async def connected_same_channel(ctx):
         return False
     else:
         return True
-    
+
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client)) 
+    print('We have logged in as {0.user}'.format(client))
+     
 
 async def genericPlay(ctx, url):
+            
     #Stream music
-    info_dict = await client.loop.run_in_executor(
+    info_dict_complete = await client.loop.run_in_executor(
             None, lambda: ytdl.extract_info(url, download=False)
         )
-    video_title = info_dict.get('title', None)
-    idvideo = info_dict.get('url',None)
+    response = False
 
-    #Create song object
-    voice = ctx.guild.voice_client
-    s = Song(ctx, idvideo, video_title, voice)
-
-    #Check if a queue exists for the server
-    if not idvideo:
+    if 'entries' in info_dict_complete:
+        entries_num = len(info_dict_complete['entries'])
+        response = True
         m = await ctx.interaction.original_message()
-        await m.edit(content = 'Couldn\'t find that song bucko')
-
-    elif not(ctx.guild.id in queues.keys()):
-        queues[ctx.guild.id] = []
-        m = await ctx.interaction.original_message()
-        await m.edit(content = s)
-        s.set_send_message(send_message = False)
-        await s.play()
-
+        await m.edit(content = "Adding \"{}\" ({} songs found)".format(info_dict_complete['title'],entries_num))
     else:
-        queues[ctx.guild.id].append(s)
-        m = await ctx.interaction.original_message()
-        await m.edit(content = 'Added: {}'.format(video_title))
+        info_dict_complete['entries'] = [info_dict_complete]
+        entries_num = 1
+
+        
+    for i in range(entries_num):
+        info_dict = info_dict_complete['entries'][i]
+        video_title = info_dict.get('title', None)
+        idvideo = info_dict.get('url',None)
+
+        #Check if the url was valid
+        if not idvideo:
+            m = await ctx.interaction.original_message()
+            await m.edit(content = 'Couldn\'t find that song bucko')
+            return
+
+        #Create song object
+        voice = ctx.guild.voice_client
+        s = Song(ctx, idvideo, video_title, voice)
+
+        #Check if the bot has a queue in the server
+        if not(ctx.guild.id in queues.keys()):
+            queues[ctx.guild.id] = []
+            if not response:
+                response = True
+                s.set_send_message(send_message = False)
+                m = await ctx.interaction.original_message()
+                await m.edit(content = s)
+            await s.play()
+            
+        else:
+            queues[ctx.guild.id].append(s)
+            if not response:
+                response = True
+                m = await ctx.interaction.original_message()
+                await m.edit(content = 'Added: {}'.format(video_title))
+
 
 @client.slash_command(guild_ids=guilds, description = "Play a song from a youtube search pal")
 @commands.guild_only()
@@ -145,7 +170,8 @@ async def play( ctx,
     await ctx.interaction.response.defer()
 
     # Finding the URL
-    result = VideosSearch(query = query,limit = 1).result()["result"]
+    result = await VideosSearch(query = query,limit = 1).next()
+    result = result['result']
     if result:
         await genericPlay(ctx, result[0]["link"])
     else:
@@ -157,9 +183,9 @@ async def play( ctx,
 @commands.check(author_is_connected)
 @commands.check(connect_bot)
 @commands.check(connected_same_channel)
-async def play_url(ctx, url):
+async def play_url( ctx, 
+                url: Option(str, "From what link do you want me to play, pal?")):
     await ctx.interaction.response.defer()
-    
     await genericPlay(ctx, url)
 
 
@@ -255,5 +281,8 @@ async def delete_queue(ctx):
     else:
         await ctx.response.send_message("There's no queue pal")
 
+
+
+    
 load_dotenv('.env')
 client.run(os.environ['TOKEN'])
