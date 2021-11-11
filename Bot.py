@@ -15,13 +15,14 @@ from youtubesearchpython.__future__ import VideosSearch
 queues = {}
 
 class Song:
-    def __init__(self, guild_id: int , text: discord.TextChannel, voice: discord.VoiceChannel , idvideo: str, video_title: str):
+    def __init__(self, guild_id: int , text: discord.TextChannel, voice: discord.VoiceChannel , idvideo: str, video_title: str, embed: dict):
         self.guild_id = guild_id
         self.text = text
         self.idvideo = idvideo
         self.video_title = video_title
         self.voice = voice
         self.send_message = True
+        self.embed = embed
         
     async def play(self):
 
@@ -44,7 +45,7 @@ class Song:
 
         self.voice.play(discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.idvideo)),after = afterFunc)
         if self.send_message:
-            await self.text.send(self)   
+            await self.text.send(embed=self.get_embed())  
     
     def set_send_message(self, send_message: bool = True ):
         self.send_message = send_message
@@ -53,8 +54,7 @@ class Song:
         return self.video_title
     
     def get_embed(self):
-        embed = discord.Embed(title = 'Now playing:', description = self.video_title, color = 0x00ff00)
-        return embed
+        return discord.Embed.from_dict(self.embed)
 
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
@@ -145,7 +145,8 @@ async def genericPlay(ctx, url):
 
         #Create song object
         voice = ctx.guild.voice_client
-        s = Song(ctx.guild.id, ctx.channel, voice, idvideo, video_title)
+        embed_dict = {'title': 'Now Playing', 'description': video_title, 'url' : info_dict['webpage_url'], 'color': 5763719, 'author':{'name':ctx.author.display_name,'icon_url':ctx.author.display_avatar.url }, 'thumbnail': {'url': info_dict['thumbnail']}}
+        s = Song(ctx.guild.id, ctx.channel, voice, idvideo, video_title, embed_dict)
 
         #Check if the bot has a queue in the server
         if not(ctx.guild.id in queues.keys()):
@@ -154,7 +155,7 @@ async def genericPlay(ctx, url):
                 response = True
                 s.set_send_message(send_message = False)
                 m = await ctx.interaction.original_message()
-                await m.edit(content = s)
+                await m.edit(content = None, embed = discord.Embed.from_dict(embed_dict))
             asyncio.run_coroutine_threadsafe(s.play(),client.loop)
             
         else:
