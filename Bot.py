@@ -9,15 +9,15 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from discord.commands import Option
 from youtubesearchpython.__future__ import VideosSearch 
-from youtubesearchpython.__future__ import Playlist
 
 #Dictionary where the key is the id to every guild where the bot is currently playing
 #Every key is gonna be associated with a list of songs which are on the queue
 queues = {}
 
 class Song:
-    def __init__(self, ctx, idvideo: str, video_title: str, voice):
-        self.ctx = ctx
+    def __init__(self, guild_id: int , text: discord.TextChannel, voice: discord.VoiceChannel , idvideo: str, video_title: str):
+        self.guild_id = guild_id
+        self.text = text
         self.idvideo = idvideo
         self.video_title = video_title
         self.voice = voice
@@ -31,25 +31,30 @@ class Song:
                 print(error)
             else:
                 #Check if the queue exists
-                if self.ctx.guild.id in queues.keys():
+                if self.guild_id in queues.keys():
                     #Checks if the queue is not empty
-                    if queues[self.ctx.guild.id]:
-                        asyncio.run_coroutine_threadsafe(queues[self.ctx.guild.id].pop(0).play(),client.loop)
+                    if queues[self.guild_id]:
+                        asyncio.run_coroutine_threadsafe(queues[self.guild_id].pop(0).play(),client.loop)
                     else:
                         #If empty we delete it from the dictionary and disconnect
-                        del queues[self.ctx.guild.id]
-                        asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
+                        del queues[self.guild_id]
+                        asyncio.run_coroutine_threadsafe(self.voice.disconnect(),client.loop)
                 else:
-                    asyncio.run_coroutine_threadsafe(self.ctx.guild.voice_client.disconnect(),client.loop)
+                    asyncio.run_coroutine_threadsafe(self.voice.disconnect(),client.loop)
+
         self.voice.play(discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(self.idvideo)),after = afterFunc)
         if self.send_message:
-            await self.ctx.send(self)   
+            await self.text.send(self)   
     
     def set_send_message(self, send_message: bool = True ):
         self.send_message = send_message
 
     def get_videoTitle(self):
         return self.video_title
+    
+    def get_embed(self):
+        embed = discord.Embed(title = 'Now playing:', description = self.video_title, color = 0x00ff00)
+        return embed
 
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
@@ -140,7 +145,7 @@ async def genericPlay(ctx, url):
 
         #Create song object
         voice = ctx.guild.voice_client
-        s = Song(ctx, idvideo, video_title, voice)
+        s = Song(ctx.guild.id, ctx.channel, voice, idvideo, video_title)
 
         #Check if the bot has a queue in the server
         if not(ctx.guild.id in queues.keys()):
@@ -150,7 +155,7 @@ async def genericPlay(ctx, url):
                 s.set_send_message(send_message = False)
                 m = await ctx.interaction.original_message()
                 await m.edit(content = s)
-            await s.play()
+            asyncio.run_coroutine_threadsafe(s.play(),client.loop)
             
         else:
             queues[ctx.guild.id].append(s)

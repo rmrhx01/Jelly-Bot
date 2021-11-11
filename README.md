@@ -19,4 +19,5 @@ TODO:
  - Volume controls
  - Shuffle
  - play from spotify
+ - making an UI(view)
  
