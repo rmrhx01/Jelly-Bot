@@ -8,7 +8,8 @@ pip install
  - PyNaCl
 
 Set Enviroment Variables:
- - TOKEN
+ - DISCORD_TOKEN
+ - SPOTIFY_TOKEN
 
 Bugs:
  - Show queue doesnt work if the queue is past 2000 characters

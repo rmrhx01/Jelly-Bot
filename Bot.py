@@ -5,10 +5,13 @@ import discord
 import youtube_dl
 import asyncio
 import os
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord.commands import Option
-from youtubesearchpython.__future__ import VideosSearch 
+from youtubesearchpython.__future__ import VideosSearch
+
 
 #Dictionary where the key is the id to every guild where the bot is currently playing
 #Every key is gonna be associated with a list of songs which are on the queue
@@ -80,7 +83,11 @@ ytdl_format_options_video = {
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options_video)
 
+async def search_song(title):
+    result = await VideosSearch(query = title,limit = 1).next()
+    return result['result']
 
+# Checks before running commands
 async def author_is_connected(ctx):
     if ctx.author.voice and ctx.author.voice.channel:
         return True
@@ -176,8 +183,7 @@ async def play( ctx,
     await ctx.interaction.response.defer()
 
     # Finding the URL
-    result = await VideosSearch(query = query,limit = 1).next()
-    result = result['result']
+    result = search_song(query)
     if result:
         await genericPlay(ctx, result[0]["link"])
     else:
@@ -287,8 +293,30 @@ async def delete_queue(ctx):
     else:
         await ctx.response.send_message("There's no queue pal")
 
+@client.slash_command(guild_ids=guilds, description = "Play a song or a playlist from spotify pal")
+@commands.guild_only()
+@commands.check(author_is_connected)
+@commands.check(connect_bot)
+@commands.check(connected_same_channel)
+async def play_spotify( ctx, 
+                url: Option(str, "From what link do you want me to play, pal?"),
+                index: Option(int, "What song do you want to start at, pal?", required=False, default = 1),
+                limit: Option(int, "How many songs do you want to play, pal?", required=False, default = 10)):
+    await ctx.interaction.response.defer()
+    playlist = sp.playlist_items(url, offset = index-1, limit = limit ,additional_types=["track"])
+    if playlist:
+        for song in playlist["items"]:
+            result = await search_song(song["track"]["name"])
+            await genericPlay(ctx, result[0]["link"])
+    else:
+        m = await ctx.interaction.original_message()
+        await m.edit(content = 'Couldn\'t find that playlist bucko')
+
+
 
 
     
 load_dotenv('.env')
-client.run(os.environ['TOKEN'])
+auth_manager = SpotifyClientCredentials()
+sp = spotipy.Spotify(auth_manager=auth_manager)
+client.run(os.environ['DISCORD_TOKEN'])
