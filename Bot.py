@@ -9,7 +9,6 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
 from discord.ext import commands
-from discord.commands import Option
 from youtubesearchpython.__future__ import VideosSearch
 
 
@@ -62,9 +61,10 @@ class Song:
     def __str__(self):
         return ('Now playing: {}'.format(self.video_title))
 
-client = commands.Bot()
 
 guilds = [715759799668834324, 658165266206818315]
+
+client = discord.Bot(debug_guilds=guilds)
 ytdl_format_options_video = {
     'format': 'bestaudio/best',
     'outtmpl': '%(id)s.%(ext)s',
@@ -89,6 +89,7 @@ async def search_song(title):
 
 # Checks before running commands
 async def author_is_connected(ctx):
+    print(ctx)
     if ctx.author.voice and ctx.author.voice.channel:
         return True
     else:
@@ -173,35 +174,35 @@ async def genericPlay(ctx, url):
                 await m.edit(content = 'Added: {}'.format(video_title))
 
 
-@client.slash_command(guild_ids=guilds, description = "Play a song from a youtube search pal")
+@client.slash_command(description = "Play a song from a youtube search pal")
 @commands.guild_only()
-@commands.check(author_is_connected)
-@commands.check(connect_bot)
 @commands.check(connected_same_channel)
+@commands.check(connect_bot)
+@commands.check(author_is_connected)
 async def play( ctx, 
-                query: Option(str, "What do you want to search for, pal?")):
+                query: discord.Option(str, "What do you want to search for, pal?")):
     await ctx.interaction.response.defer()
 
     # Finding the URL
-    result = search_song(query)
+    result = await search_song(query)
     if result:
         await genericPlay(ctx, result[0]["link"])
     else:
         m = await ctx.interaction.original_message()
         await m.edit(content = 'Couldn\'t find that song bucko')
 
-@client.slash_command(guild_ids=guilds, description = "Play a song from a URL pal")
+@client.slash_command(description = "Play a song from a URL pal")
 @commands.guild_only()
-@commands.check(author_is_connected)
-@commands.check(connect_bot)
 @commands.check(connected_same_channel)
+@commands.check(connect_bot)
+@commands.check(author_is_connected)
 async def play_url( ctx, 
-                url: Option(str, "From what link do you want me to play, pal?")):
+                url: discord.Option(str, "From what link do you want me to play, pal?")):
     await ctx.interaction.response.defer()
     await genericPlay(ctx, url)
 
 
-@client.slash_command(guild_ids=guilds, description = "Kill the bot pal")
+@client.slash_command(description = "Kill the bot pal")
 async def bye(ctx):
     await ctx.response.send_message("Good night")
     for server in client.guilds:
@@ -210,10 +211,10 @@ async def bye(ctx):
     await client.close()   
 
 # Pause command
-@client.slash_command(guild_ids=guilds, description = "Pause the current song pal")
-@commands.check(author_is_connected)
-@commands.check(bot_is_connected)
+@client.slash_command(description = "Pause the current song pal")
 @commands.check(connected_same_channel)
+@commands.check(bot_is_connected)
+@commands.check(author_is_connected)
 async def pause(ctx):
     # Song is playing
     if not ctx.guild.voice_client.is_paused():
@@ -225,10 +226,10 @@ async def pause(ctx):
         await ctx.response.send_message("Can't pause pal")
 
 # Unpause command
-@client.slash_command(guild_ids=guilds, description = "Unpause the current song pal")
-@commands.check(author_is_connected)
-@commands.check(bot_is_connected)
+@client.slash_command(description = "Unpause the current song pal")
 @commands.check(connected_same_channel)
+@commands.check(bot_is_connected)
+@commands.check(author_is_connected)
 async def unpause(ctx):
     # Song is paused
     if ctx.guild.voice_client.is_paused():
@@ -240,10 +241,10 @@ async def unpause(ctx):
         await ctx.response.send_message("Can't unpause pal")
 
 # Skip command
-@client.slash_command(guild_ids=guilds, description = "Skip the current song pal")
-@commands.check(author_is_connected)
-@commands.check(bot_is_connected)
+@client.slash_command(description = "Skip the current song pal")
 @commands.check(connected_same_channel)
+@commands.check(bot_is_connected)
+@commands.check(author_is_connected)
 async def skip(ctx):
     if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
         ctx.guild.voice_client.stop()
@@ -252,10 +253,10 @@ async def skip(ctx):
         await ctx.response.send_message("Nothing is playing pal")
 
 # Stop command
-@client.slash_command(guild_ids=guilds, description = "No more music pal")
-@commands.check(author_is_connected)
-@commands.check(bot_is_connected)
+@client.slash_command(description = "No more music pal")
 @commands.check(connected_same_channel)
+@commands.check(bot_is_connected)
+@commands.check(author_is_connected)
 async def stop(ctx):
     if ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused():
         del queues[ctx.guild.id]
@@ -264,7 +265,7 @@ async def stop(ctx):
     else:
         await ctx.response.send_message("Nothing is playing pal")
 
-@client.slash_command(guild_ids=guilds, description = "Show the songs on queue pal")
+@client.slash_command(description = "Show the songs on queue pal")
 @commands.guild_only()
 @commands.check(bot_is_connected)
 async def show_queue(ctx):
@@ -282,10 +283,10 @@ async def show_queue(ctx):
     else:
         await ctx.response.send_message("Queue is empty pal")
     
-@client.slash_command(guild_ids=guilds, description = "Delete the songs in queue pal")
-@commands.check(author_is_connected)
-@commands.check(bot_is_connected)
+@client.slash_command(description = "Delete the songs in queue pal")
 @commands.check(connected_same_channel)
+@commands.check(bot_is_connected)
+@commands.check(author_is_connected)
 async def delete_queue(ctx):
     if ctx.guild.id in queues.keys() and queues[ctx.guild.id]: 
         del queues[ctx.guild.id]
@@ -293,20 +294,21 @@ async def delete_queue(ctx):
     else:
         await ctx.response.send_message("There's no queue pal")
 
-@client.slash_command(guild_ids=guilds, description = "Play a song or a playlist from spotify pal")
+@client.slash_command(description = "Play a song or a playlist from spotify pal")
 @commands.guild_only()
-@commands.check(author_is_connected)
-@commands.check(connect_bot)
 @commands.check(connected_same_channel)
+@commands.check(connect_bot)
+@commands.check(author_is_connected)
 async def play_spotify( ctx, 
-                url: Option(str, "From what link do you want me to play, pal?"),
-                index: Option(int, "What song do you want to start at, pal?", required=False, default = 1),
-                limit: Option(int, "How many songs do you want to play, pal?", required=False, default = 10)):
+                url: discord.Option(str, "From what link do you want me to play, pal?"),
+                index: discord.Option(int, "What song do you want to start at, pal?", required=False, default = 1),
+                limit: discord.Option(int, "How many songs do you want to play, pal?", required=False, default = 50),
+                randomize: discord.Option(bool, "Do you want me to play the songs in random order, pal?", required=False, default = False)):
     await ctx.interaction.response.defer()
     playlist = sp.playlist_items(url, offset = index-1, limit = limit ,additional_types=["track"])
     if playlist:
         for song in playlist["items"]:
-            result = await search_song(song["track"]["name"])
+            result = await search_song(song["track"]["name"] + ' ' + song["track"]["artists"][0]["name"])
             await genericPlay(ctx, result[0]["link"])
     else:
         m = await ctx.interaction.original_message()
